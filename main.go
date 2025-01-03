@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/mailgun/mailgun-go/v4"
 )
 
@@ -87,7 +88,18 @@ func NewHandler(emailService *EmailService) *Handler {
 func (h *Handler) SendProductHandler(c *gin.Context) {
 	var productData ProductEmail
 	if err := c.BindJSON(&productData); err != nil {
-		c.JSON(400, gin.H{"error": "Invalid request body"})
+		c.JSON(400, gin.H{
+			"error":   "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Basic validation
+	if productData.RecipientEmail == "" || productData.ProductName == "" {
+		c.JSON(400, gin.H{
+			"error": "Missing required fields",
+		})
 		return
 	}
 
@@ -96,7 +108,10 @@ func (h *Handler) SendProductHandler(c *gin.Context) {
 
 	resp, id, err := h.emailService.SendProductEmail(ctx, productData)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Failed to send email"})
+		c.JSON(500, gin.H{
+			"error":   "Failed to send email",
+			"details": err.Error(),
+		})
 		return
 	}
 
@@ -108,6 +123,11 @@ func (h *Handler) SendProductHandler(c *gin.Context) {
 }
 
 func main() {
+	// Load .env file if it exists
+	if err := godotenv.Load(); err != nil {
+		log.Println("Error loading .env file")
+	}
+
 	// Get environment variables directly
 	config := Config{
 		Domain:    os.Getenv("MAILGUN_DOMAIN"),
