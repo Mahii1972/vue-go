@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"github.com/mailgun/mailgun-go/v4"
 )
 
@@ -109,16 +108,17 @@ func (h *Handler) SendProductHandler(c *gin.Context) {
 }
 
 func main() {
-	// Load .env file
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
+	// Get environment variables directly
 	config := Config{
 		Domain:    os.Getenv("MAILGUN_DOMAIN"),
 		ApiKey:    os.Getenv("MAILGUN_API_KEY"),
 		FromName:  os.Getenv("MAILGUN_FROM_NAME"),
 		FromEmail: os.Getenv("MAILGUN_FROM_EMAIL"),
+	}
+
+	// Validate required environment variables
+	if config.Domain == "" || config.ApiKey == "" {
+		log.Fatal("Required environment variables MAILGUN_DOMAIN and MAILGUN_API_KEY must be set")
 	}
 
 	// Initialize services and handlers
